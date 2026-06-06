@@ -1,40 +1,59 @@
-# RunCraft QA Agent
+# 🤖 RunCraft QA Agent (Claude + Playwright + Azure DevOps MCP)
 
-**Author:** Anshul Gupta  
-**Version:** v1.0  
-**Stack:** Claude AI · Playwright MCP · Azure DevOps MCP
-
-An AI-powered QA test execution agent that runs Azure DevOps test cases against web applications using Playwright — with self-healing locators, smart script resolution, and fully automated result write-back to ADO.
-
----
-
-## What It Does
-
-- Executes ADO test cases via natural language session (no code required at runtime)
-- Resolves and self-heals broken element locators automatically
-- Writes execution results, tags, and scripts back to ADO in a single batched operation
-- Supports three execution modes: Test Plan, User Story, Individual TCs
-- Runs headless (CI/CD) or headed (debug/demo)
+![Claude](https://img.shields.io/badge/Claude-Sonnet%204-8A2BE2)
+![Playwright](https://img.shields.io/badge/Playwright-MCP%20Integration-45ba4b)
+![ADO](https://img.shields.io/badge/Azure%20DevOps-MCP%20Integration-0078D7)
+![Modes](https://img.shields.io/badge/Modes-Test%20Plan%20%7C%20User%20Story%20%7C%20Individual-brightgreen)
+![Version](https://img.shields.io/badge/Version-v1.0-blue)
+![Author](https://img.shields.io/badge/Author-Anshul%20Gupta-orange)
 
 ---
 
-## Architecture
+## Overview
+
+**RunCraft QA Agent** is a Claude-powered test execution agent that runs Azure DevOps test cases against web applications using Playwright — with self-healing locators, smart script resolution, and fully automated result write-back to ADO.
+
+It resolves broken selectors at runtime, writes execution results and tags back to ADO in a single batched operation, and requires zero manual scripting during a session.
+
+Built as a production-grade AI QA executor for teams running ADO-based test management workflows.
+
+---
+
+## 🚀 Features
+
+✅ Executes ADO test cases via natural language session — no code required at runtime  
+✅ Three execution modes — Test Plan, User Story, Individual TCs  
+✅ 4-level locator resolution pipeline with automatic self-healing  
+✅ 4-tier script resolution — reuses, inherits, or builds scripts intelligently  
+✅ Canonical TC auto-registration per module  
+✅ Single batched ADO write-back at session end — never per-TC  
+✅ Step trace log on FAIL — shows exactly which steps passed before failure  
+✅ SKIPPED status written for any TC not reached during session  
+✅ AI Execution Pass / Fail tag auto-swapped on every run  
+✅ Agent-generated record naming convention for traceability  
+✅ Runs headless (CI/daily runs) or headed (debug/demo)  
+✅ All timestamps in IST (UTC+5:30)  
+
+---
+
+## 🏗 Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  Claude AI Agent                    │
-│            (Session Orchestrator)                   │
-└────────────┬────────────────────┬───────────────────┘
-             │                    │
-    ┌────────▼────────┐  ┌───────▼────────┐
-    │  Playwright MCP │  │  Azure DevOps  │
-    │  (Browser)      │  │  MCP (ADO)     │
-    └────────┬────────┘  └───────┬────────┘
-             │                    │
-    ┌────────▼────────┐  ┌───────▼────────┐
-    │  Web App Under  │  │ Locator        │
-    │  Test           │  │ Registry (ADO) │
-    └─────────────────┘  └────────────────┘
+Azure DevOps Test Cases (Plan / User Story / Individual IDs)
+        ↓
+   Locator Registry loaded from ADO (once per session)
+        ↓
+   Script Resolution (4-tier: Description → Canonical → Session → Build)
+        ↓
+   Playwright Execution (headless or headed)
+   (Login → Navigate → Execute Steps → Self-Heal if needed)
+        ↓
+   Result Recording (PASS / FAIL / SKIPPED per TC)
+        ↓
+   Batched ADO Write-Back
+   (Results + Tags + Scripts + Healed Locators — one operation)
+        ↓
+   Session Summary
 ```
 
 **Locator Resolution Pipeline**
@@ -42,130 +61,257 @@ An AI-powered QA test execution agent that runs Azure DevOps test cases against 
 Level 1 → ADO Locator Registry    (primary — live, auto-updated)
 Level 2 → Session Cache           (inherited within session)
 Level 3 → Self-Heal DOM Scan      (max 1 scan per element per session)
-Level 4 → Hard FAIL               (screenshot + continue to next TC)
+Level 4 → Hard FAIL               (screenshot captured, next TC continues)
 ```
 
 **Script Resolution Pipeline (per TC)**
 ```
-Tier 1  → Existing exec-script in TC Description
-Tier 2  → Canonical TC override (manual)
-Tier 2b → Canonical TC (auto-registered)
-Tier 3  → Last successful TC script this session (same module)
-Tier 4  → Build from registry + TC step text (cold start)
+Tier 1  → Existing exec-script block in TC Description
+Tier 2  → Canonical TC override (manual, highest trust)
+Tier 2b → Canonical TC (auto-registered per module)
+Tier 3  → Last successful TC script this session (same module only)
+Tier 4  → Build from ADO registry + TC step text (cold start)
 ```
 
 ---
 
-## Execution Modes
+## 🛠 Tech Stack
 
-| Mode | Input Required |
-|------|----------------|
-| Test Plan | Plan ID + Suite ID |
-| User Story | User Story Work Item ID |
-| Individual TCs | Up to 3 TC IDs |
+| Tool | Purpose |
+|---|---|
+| Claude (Sonnet 4) | LLM backbone — reasoning, execution orchestration, flow control |
+| Playwright MCP | Browser automation — click, fill, navigate, screenshot |
+| Azure DevOps MCP | Direct ADO integration — fetch TCs, write results, update registry |
+| Node.js | Runtime for MCP servers |
+| JavaScript | Agent execution logic and Playwright utilities |
+| JSON | Field defaults, output templates, locator registry |
 
 ---
 
-## Session Flow
+## 📂 Project Structure
 
 ```
-1. Load locator registry from ADO
-2. Collect credentials from user
-3. Fetch test cases → show summary
-4. Login via Playwright
-5. Execute TCs sequentially
-6. Batched write-back to ADO:
-   → Mark unexecuted TCs as SKIPPED
-   → Write self-healed locators to registry
-   → Register new canonical TCs
-   → Write execution scripts to TC Description
-   → Write results + tags to all TCs
-   → Render session summary
+RunCraft-QA-Agent/
+│
+├── system_prompt.md              # Agent identity, session rules, hard constraints
+├── execute_flow.js               # Complete execution logic — all modes, all pipelines
+├── navigation_utils.js           # Playwright helpers — login, fill, navigate, self-heal, registry I/O
+├── button_check.js               # Pre-click guard — READY / DISABLED / HIDDEN / NOT_FOUND
+├── toast_observer.js             # MutationObserver + Fetch/XHR intercept for async result capture
+├── sprint.conf                   # Environment config — updated once per sprint by QA Lead
+├── locators.json                 # Fallback locator registry — used only when ADO registry unreachable
+├── executor_templates.json       # Output format templates — ADO History HTML, session summary
+└── executor_field_defaults.json  # ADO field patch defaults — op/path/isFormatted rules
 ```
 
----
-
-## Agent File Roles
-
-| File | Role | Load When |
-|------|------|-----------|
-| `system_prompt.md` | Agent identity, session rules, hard constraints | Every session |
-| `execute_flow.js` | Complete execution logic — all modes, all pipelines | Mode selected |
-| `navigation_utils.js` | Playwright helpers — login, fill, navigate, self-heal, registry I/O | First browser action |
-| `button_check.js` | Pre-click guard — returns READY / DISABLED / HIDDEN / NOT_FOUND | Every significant click |
-| `toast_observer.js` | MutationObserver + Fetch/XHR intercept for toast/API result capture | Button clicks with async response |
-| `sprint.conf` | Environment config — updated once per sprint | Session start |
-| `locators.json` | Fallback locator registry — used only when ADO registry unreachable | ADO registry failure |
-| `executor_templates.json` | Output format templates — ADO History HTML, session summary | First TC execution |
-| `executor_field_defaults.json` | ADO field patch defaults — op/path/isFormatted rules | First ADO write |
-
-> Files are loaded as Claude Project Knowledge. None are executed directly — the agent reads and applies them at runtime.
+> All files are loaded as Claude Project Knowledge. The agent reads and applies them at runtime — none are executed directly.
 
 ---
 
-## Setup
+## ⚙️ Setup Guide
 
-### 1. Prerequisites
+### Step 1 — Install Node.js
 
-**Python**
+Download and install from:  
+👉 https://nodejs.org/en/download
+
+---
+
+### Step 2 — Install Python + Playwright
+
 ```cmd
+:: Check Python
 python --version
 
 :: If not installed: https://www.python.org/downloads/windows/
 :: After install, open a new CMD and verify:
 py --version
-```
 
-**Playwright**
-```cmd
-:: Python
+:: Install Playwright (Python)
 py -m pip install playwright
 
-:: Node.js
+:: Install Playwright (Node.js)
 npm init playwright@latest
 npx playwright test
 ```
 
-### 2. Claude Desktop
+---
 
-- Install [Claude Desktop](https://claude.ai/download)
-- Configure MCP servers: **azure-devops** and **playwright** (headless + headed)
-- Set your ADO org URL and PAT as environment variables
+### Step 3 — Install Claude Desktop
 
-### 3. Claude Project
-
-- Create a new Claude Project named `RunCraft QA Agent`
-- Paste the contents of `PROJECT_INSTRUCTION.md` into the Project Instructions field
-- Upload all agent files as Project Knowledge
-
-### 4. Run
-
-Open the Claude Project and start a conversation. The agent will guide you through mode selection, credential collection, TC fetch, and execution.
+Download and install from:  
+👉 https://claude.ai/download
 
 ---
 
-## Key Design Decisions
+### Step 4 — Create an Azure DevOps PAT Token
 
-- **Single batch write-back** — all ADO updates happen once at session end, never per-TC
-- **Registry-first locators** — selectors live in ADO, not in code, so they survive UI changes
-- **Self-heal closes the loop** — broken selectors are fixed at runtime and written back automatically
-- **Module isolation** — scripts never inherit across modules; canonical TC per module ensures consistency
-- **`isFormatted: false`** — mandatory on all ADO Description and Steps writes to prevent silent data loss
+1. Go to your Azure DevOps organization → **User Settings** → **Personal Access Tokens**
+2. Click **New Token**
+3. Set scopes: **Work Items: Read & Write**, **Test Management: Read & Write**
+4. Copy the token — you will not see it again
 
----
-
-## Changelog
-
-### v1.0
-- Three execution modes: Test Plan · User Story · Individual TCs
-- 4-level locator pipeline with self-healing
-- 4-tier script resolution with canonical TC auto-registration
-- Batched session-end ADO write-back
-- Step trace log on FAIL (stepsPassedLog)
-- SKIPPED status for unexecuted TCs
-- AI Execution Pass / Fail tag swap on every run
-- Record creation naming convention for agent-generated records
+> ⚠️ Keep your PAT private. Never commit it to any repository.
 
 ---
 
-*Built with Claude AI · Playwright MCP · Azure DevOps MCP*
+### Step 5 — Save Credentials as Environment Variables
+
+| Variable | Value |
+|---|---|
+| `AZURE_DEVOPS_ORG_URL` | `https://dev.azure.com/{your-org}` |
+| `AZURE_DEVOPS_PAT` | Your PAT token |
+
+---
+
+### Step 6 — Configure Claude Desktop
+
+Open Claude Desktop → **File** → **Settings** → **Developer** → **Edit Config**
+
+Paste the following into `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "azure-devops": {
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "{your-org}"],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "${AZURE_DEVOPS_ORG_URL}",
+        "AZURE_DEVOPS_PAT": "${AZURE_DEVOPS_PAT}"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--headless"]
+    },
+    "playwright-headed": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}
+```
+
+Replace `{your-org}` with your Azure DevOps organization name.
+
+> - Use `playwright` server for daily headless runs  
+> - Use `playwright-headed` for debugging or print/download TCs
+
+---
+
+### Step 7 — Kill and Restart Claude Desktop
+
+Open Task Manager → end any running Claude processes → reopen Claude Desktop.
+
+---
+
+### Step 8 — Verify the MCP Connection
+
+```bash
+npx -y @azure-devops/mcp {your-org} -a env
+```
+
+Then check the connection indicator inside Claude Desktop.
+
+---
+
+### Step 9 — Create a Claude Project
+
+1. In Claude Desktop, create a new Project named: `RunCraft QA Agent`
+2. Add the Project Instruction (see `PROJECT_INSTRUCTION.md` in your private config repo)
+3. Upload all agent files as Project Knowledge:
+
+```
+system_prompt.md
+execute_flow.js
+navigation_utils.js
+button_check.js
+toast_observer.js
+sprint.conf
+locators.json
+executor_templates.json
+executor_field_defaults.json
+```
+
+---
+
+## 📤 What Each Executed TC Produces in ADO
+
+- **System.History** — structured execution result HTML (PASS / FAIL / SKIPPED)
+- **System.Tags** — `AI Execution Pass` or `AI Execution Fail` tag applied and swapped automatically
+- **System.Description** — working execution script written back for future runs
+- **Locator Registry** — self-healed selectors written back to ADO registry WI
+- **Step Trace Table** (on FAIL) — which steps passed, which step failed, locator source per step
+
+---
+
+## 🧪 Sample Session Output
+
+```
+🎉 Execution Complete | Individual TCs | 2026-06-07T14:32:00+05:30
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ TC-449850 | PASS  | Task       | 8 steps
+❌ TC-180569 | FAIL  | Task       | Step 4/10 | Element not found
+⏭️ TC-456500 | SKIPPED | MultiCalender | Pre-condition not met
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASS: 1 | FAIL: 1 | SKIPPED: 1 | HEALED: 2
+Executed by: qa.engineer@yourorg.com | Sprint: Jun-2026
+```
+
+---
+
+## 📂 Flow Diagram
+
+```
+Session Start
+     ↓
+Confirm ADO email + credentials
+     ↓
+Mode Selection
+     │
+     ├──▶ TEST PLAN MODE
+     │       1. Plan ID + Suite ID
+     │       2. Fetch all TCs in suite
+     │       3. Show summary → confirm
+     │       4. Login via Playwright
+     │       5. Execute sequentially
+     │       6. Batched ADO write-back
+     │
+     ├──▶ USER STORY MODE
+     │       1. User Story WI ID
+     │       2. Fetch linked TCs
+     │       3. Select all or specific TCs
+     │       4. Login via Playwright
+     │       5. Execute sequentially
+     │       6. Batched ADO write-back
+     │
+     └──▶ INDIVIDUAL TC MODE
+             1. Up to 3 TC IDs
+             2. Fetch TC details
+             3. Login via Playwright
+             4. Execute sequentially
+             5. Batched ADO write-back
+```
+
+---
+
+## 📌 Roadmap
+
+- [ ] Parallel TC execution across multiple browser contexts
+- [ ] CI/CD trigger integration (GitHub Actions / ADO Pipelines)
+- [ ] Mobile execution mode (Appium MCP)
+- [ ] Execution health dashboard — pass rate trends across sprints
+- [ ] Integration with TestCraft QA Agent for generate → execute pipeline
+
+---
+
+## 👨‍💻 Author
+
+**Anshul Gupta**  
+QA Automation Engineer  
+Built as a production-grade AI QA executor — not a prototype.
+
+---
+
+⭐ If this project is useful to you — star the repo!
