@@ -168,55 +168,14 @@ Download and install from:
 
 Open Claude Desktop → **File** → **Settings** → **Developer** → **Edit Config**
 
-Paste the following into `claude_desktop_config.json`:
+Add the `azure-devops`, `playwright` (headless), and `playwright-headed` MCP servers to your `claude_desktop_config.json`. Set `AZURE_DEVOPS_ORG_URL` and `AZURE_DEVOPS_PAT` from your environment variables.
 
-```json
-{
-  "mcpServers": {
-    "azure-devops": {
-      "command": "npx",
-      "args": ["-y", "@azure-devops/mcp", "{your-org}"],
-      "env": {
-        "AZURE_DEVOPS_ORG_URL": "${AZURE_DEVOPS_ORG_URL}",
-        "AZURE_DEVOPS_PAT": "${AZURE_DEVOPS_PAT}"
-      }
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--headless"]
-    },
-    "playwright-headed": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
-    }
-  }
-}
-```
-
-Replace `{your-org}` with your Azure DevOps organization name.
-
-> - Use `playwright` server for daily headless runs  
+> - Use the `playwright` server for daily headless runs  
 > - Use `playwright-headed` for debugging or print/download TCs
 
 ---
 
-### Step 7 — Kill and Restart Claude Desktop
-
-Open Task Manager → end any running Claude processes → reopen Claude Desktop.
-
----
-
-### Step 8 — Verify the MCP Connection
-
-```bash
-npx -y @azure-devops/mcp {your-org} -a env
-```
-
-Then check the connection indicator inside Claude Desktop.
-
----
-
-### Step 9 — Create a Claude Project
+### Step 7 — Create a Claude Project
 
 1. In Claude Desktop, create a new Project named: `RunCraft QA Agent`
 2. Add the Project Instruction (see `PROJECT_INSTRUCTION.md` in your private config repo)
@@ -251,9 +210,9 @@ executor_field_defaults.json
 ```
 🎉 Execution Complete | Individual TCs | 2026-06-07T14:32:00+05:30
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ TC-449850 | PASS  | Task       | 8 steps
-❌ TC-180569 | FAIL  | Task       | Step 4/10 | Element not found
-⏭️ TC-456500 | SKIPPED | MultiCalender | Pre-condition not met
+✅ TC-123 | PASS    | Task          | 8 steps
+❌ TC-456 | FAIL    | Task          | Step 4/10 | Element not found
+⏭️ TC-789 | SKIPPED | MultiCalender | Pre-condition not met
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PASS: 1 | FAIL: 1 | SKIPPED: 1 | HEALED: 2
 Executed by: qa.engineer@yourorg.com | Sprint: Jun-2026
