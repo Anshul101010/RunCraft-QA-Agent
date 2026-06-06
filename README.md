@@ -210,9 +210,9 @@ executor_field_defaults.json
 ```
 🎉 Execution Complete | Individual TCs | 2026-06-07T14:32:00+05:30
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ TC-123 | PASS    | Task          | 8 steps
-❌ TC-456 | FAIL    | Task          | Step 4/10 | Element not found
-⏭️ TC-789 | SKIPPED | MultiCalender | Pre-condition not met
+✅ TC-123 | PASS    | Module1 | 8 steps
+❌ TC-456 | FAIL    | Module1 | Step 4/10 | Element not found
+⏭️ TC-789 | SKIPPED | Module2 | Pre-condition not met
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PASS: 1 | FAIL: 1 | SKIPPED: 1 | HEALED: 2
 Executed by: qa.engineer@yourorg.com | Sprint: Jun-2026
